@@ -21,7 +21,10 @@ export default function OfficePage() {
   ).length;
 
   // Build agent position map from state
-  const posMap = new Map(office.agentPositions.map(p => [p.agentId, p]));
+  const posMap = useMemo(
+    () => new Map(office.agentPositions.map((p) => [p.agentId, p])),
+    [office.agentPositions],
+  );
 
   // Fallback grid for agents without positions
   const cols = Math.ceil(Math.sqrt(agents.length));
@@ -42,7 +45,10 @@ export default function OfficePage() {
     };
   };
 
-  const zoneMap = new Map(office.zones.map(z => [z.id, z]));
+  const zoneMap = useMemo(
+    () => new Map(office.zones.map((z) => [z.id, z])),
+    [office.zones],
+  );
 
   const zoneSummaries = useMemo(
     () =>
