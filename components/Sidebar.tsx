@@ -14,6 +14,7 @@ import {
   Users,
   BookOpen,
   Briefcase,
+  Zap,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ const nav = [
   { href: '/docs', label: 'Docs', icon: FileText },
   { href: '/team', label: 'Team', icon: Users },
   { href: '/office', label: 'Office', icon: Cpu },
+  { href: '/chat', label: 'Live run', icon: Zap },
   { href: '/sessions', label: 'Sessions', icon: MessageSquare },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];

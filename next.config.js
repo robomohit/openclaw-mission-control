@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ['better-sqlite3'],
+  },
   /**
    * Localhost-only:
    * - `next/image` remote URLs: only localhost / 127.0.0.1 (add patterns here if you need more hosts).

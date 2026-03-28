@@ -42,10 +42,8 @@ Optional overrides (create `.env.local` based on `.env.local.example`):
 ```bash
 npm install
 npm run dev
-# Open http://localhost:3000
+# Open http://localhost:3001 (default port; change in package.json or: npm run dev -- -p 3002)
 ```
-
-If port 3000 is busy: `npm run dev -- -p 3001`
 
 ## Windows Note
 

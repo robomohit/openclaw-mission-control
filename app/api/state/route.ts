@@ -1,28 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mkdir, readFile, writeFile } from 'fs/promises';
-import { join } from 'path';
 
-const DATA_DIR = join(process.cwd(), 'data');
-const STATE_FILE = join(DATA_DIR, 'state.json');
+import {
+  coerceSampleData,
+  DATA_DIR,
+  isSqliteEnabled,
+  readMissionState,
+  STATE_JSON_PATH,
+  writeMissionState,
+} from '@/lib/db';
+import { publishStateUpdate } from '@/lib/stateBroadcast';
 
-// Ensure data directory exists on first access
-async function ensureDataDir() {
-  try {
-    await readFile(DATA_DIR, 'utf8');
-  } catch {
-    // Directory doesn't exist, create it
-    await mkdir(DATA_DIR, { recursive: true });
-  }
+export const runtime = 'nodejs';
+
+async function ensureDataDir(): Promise<void> {
+  await mkdir(DATA_DIR, { recursive: true });
 }
 
 export async function GET() {
   try {
+    if (isSqliteEnabled()) {
+      const state = readMissionState();
+      if (state) {
+        return NextResponse.json(state);
+      }
+      return new NextResponse(null, { status: 204 });
+    }
+  } catch (e) {
+    console.error('GET /api/state SQLite read failed, falling back to JSON:', e);
+  }
+
+  try {
     await ensureDataDir();
-    const raw = await readFile(STATE_FILE, 'utf8');
+    const raw = await readFile(STATE_JSON_PATH, 'utf8');
     return NextResponse.json(JSON.parse(raw));
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      // No saved state yet — return 204 No Content to fall back to sample
+  } catch (error: unknown) {
+    const code =
+      error && typeof error === 'object' && 'code' in error
+        ? (error as NodeJS.ErrnoException).code
+        : undefined;
+    if (code === 'ENOENT') {
       return new NextResponse(null, { status: 204 });
     }
     return NextResponse.json({ error: 'Failed to read state' }, { status: 500 });
@@ -31,32 +48,53 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await ensureDataDir();
     const body = await request.json();
 
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
     }
 
-    // Read existing state (if any) to merge safely
-    let existing: any = {};
+    let existing: Record<string, unknown> = {};
     try {
-      const raw = await readFile(STATE_FILE, 'utf8');
-      existing = JSON.parse(raw);
+      if (isSqliteEnabled()) {
+        const s = readMissionState();
+        if (s) existing = s as unknown as Record<string, unknown>;
+      } else {
+        try {
+          await ensureDataDir();
+          const raw = await readFile(STATE_JSON_PATH, 'utf8');
+          existing = JSON.parse(raw) as Record<string, unknown>;
+        } catch {
+          // File missing or corrupt — use body as new state
+        }
+      }
     } catch (e) {
-      // File missing or corrupt — we'll Just use body as new state
+      console.error('POST /api/state: failed to read existing state', e);
     }
 
-    // Shallow merge: incoming body overwrites existing top-level keys
-    const merged = { ...existing, ...body };
+    const merged = coerceSampleData({
+      ...existing,
+      ...body,
+    } as Parameters<typeof coerceSampleData>[0]);
 
-    // Validate JSON before writing
     const serialized = JSON.stringify(merged, null, 2);
-    JSON.parse(serialized); // throws if serialized is invalid
+    JSON.parse(serialized);
 
-    await writeFile(STATE_FILE, serialized, 'utf-8');
+    try {
+      if (isSqliteEnabled()) {
+        writeMissionState(merged);
+        publishStateUpdate(merged);
+        return NextResponse.json({ ok: true });
+      }
+    } catch (e) {
+      console.error('POST /api/state SQLite write failed, falling back to JSON:', e);
+    }
+
+    await ensureDataDir();
+    await writeFile(STATE_JSON_PATH, serialized, 'utf-8');
+    publishStateUpdate(merged);
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('POST /api/state failed:', e);
     return NextResponse.json({ error: 'Write failed' }, { status: 500 });
   }
