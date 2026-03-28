@@ -221,6 +221,7 @@ export function ProjectCard({
         <p className="mt-1 text-sm text-slate-200">{project.suggestedNextAction}</p>
         <button
           type="button"
+          onClick={openCreateTask}
           className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-sky-400 hover:text-sky-300"
         >
           What should we do next?

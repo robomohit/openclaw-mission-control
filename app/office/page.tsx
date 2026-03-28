@@ -2,8 +2,7 @@
 
 import { useStore } from '@/lib/store';
 import { OfficeAvatar } from '@/components/OfficeAvatar';
-import { useEffect, useState } from 'react';
-import type { OfficeZone } from '@/lib/types';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function OfficePage() {
   const { agents, tasks, office } = useStore();
@@ -16,6 +15,10 @@ export default function OfficePage() {
 
   // Count active/busy agents for meeting zone highlight
   const activeCount = agents.filter(a => a.status === 'active' || a.status === 'busy').length;
+  const reviewCount = tasks.filter((task) => task.status === 'review').length;
+  const overdueCount = tasks.filter(
+    (task) => task.status !== 'done' && new Date(task.dueDate).getTime() < Date.now(),
+  ).length;
 
   // Build agent position map from state
   const posMap = new Map(office.agentPositions.map(p => [p.agentId, p]));
@@ -41,16 +44,49 @@ export default function OfficePage() {
 
   const zoneMap = new Map(office.zones.map(z => [z.id, z]));
 
+  const zoneSummaries = useMemo(
+    () =>
+      office.zones.map((zone) => {
+        const zoneAgents = agents.filter((agent) => posMap.get(agent.id)?.zoneId === zone.id);
+        const activeZoneAgents = zoneAgents.filter(
+          (agent) => agent.status === 'active' || agent.status === 'busy',
+        ).length;
+        return {
+          zone,
+          total: zoneAgents.length,
+          active: activeZoneAgents,
+        };
+      }),
+    [agents, office.zones, posMap],
+  );
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-slate-100">Office</h1>
-          <p className="text-slate-400">Visual workspace — see agents at work</p>
+          <p className="text-slate-400">Visual workspace — see where live work is clustering</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-xs text-slate-500">{activeCount} agent{activeCount !== 1 ? 's' : ''} active</div>
           <div className="text-slate-400 text-sm font-mono">{time.toLocaleTimeString()}</div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4">
+          <div className="text-xs uppercase tracking-wide text-sky-200/80">Live execution</div>
+          <div className="mt-2 text-2xl font-semibold text-slate-100">{activeCount}</div>
+          <p className="mt-1 text-sm text-slate-400">Agents currently active or busy in the workspace.</p>
+        </div>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <div className="text-xs uppercase tracking-wide text-amber-200/80">Review handoffs</div>
+          <div className="mt-2 text-2xl font-semibold text-slate-100">{reviewCount}</div>
+          <p className="mt-1 text-sm text-slate-400">Tasks that likely pull people into the huddle zone.</p>
+        </div>
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+          <div className="text-xs uppercase tracking-wide text-rose-200/80">Recovery items</div>
+          <div className="mt-2 text-2xl font-semibold text-slate-100">{overdueCount}</div>
+          <p className="mt-1 text-sm text-slate-400">Overdue tasks that need triage or reassignment.</p>
         </div>
       </div>
       <div className="relative h-[600px] bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
@@ -98,6 +134,19 @@ export default function OfficePage() {
             </div>
           );
         })}
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        {zoneSummaries.map(({ zone, total, active }) => (
+          <div
+            key={zone.id}
+            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4"
+          >
+            <div className="text-sm font-medium text-slate-100">{zone.label}</div>
+            <div className="mt-2 text-xs text-slate-500">
+              {active} active · {total} assigned
+            </div>
+          </div>
+        ))}
       </div>
       <div className="text-sm text-slate-500 flex items-center gap-4">
         <span className="flex items-center gap-1.5"><span className="inline-block h-2 w-2 rounded-full bg-emerald-400" /> Active</span>

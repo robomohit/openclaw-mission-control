@@ -73,7 +73,7 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-slate-800/80 p-3 text-xs text-slate-500">
-        Localhost · in-memory store
+        Local state sync + OpenClaw runtime polling
       </div>
     </aside>
   );
