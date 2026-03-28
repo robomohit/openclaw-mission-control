@@ -8,20 +8,23 @@ import {
   FileText,
   Home,
   LayoutGrid,
-  MessageSquare,
+  Menu,
   Settings,
   Sparkles,
   Users,
   BookOpen,
   Briefcase,
+  X,
   Zap,
+  MessageSquare,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
 const nav = [
   { href: '/', label: 'Dashboard', icon: Home },
-  { href: '/tasks', label: 'Task Board', icon: LayoutGrid },
+  { href: '/tasks', label: 'Tasks', icon: LayoutGrid },
   { href: '/calendar', label: 'Calendar', icon: Calendar },
   { href: '/projects', label: 'Projects', icon: Briefcase },
   { href: '/memories', label: 'Memories', icon: BookOpen },
@@ -35,9 +38,10 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-slate-800/80 bg-slate-900/50 backdrop-blur">
+  const navContent = (
+    <>
       <div className="flex items-center gap-2 border-b border-slate-800/80 px-4 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/15 ring-1 ring-sky-500/30">
           <Sparkles className="h-5 w-5 text-sky-400" aria-hidden />
@@ -59,6 +63,7 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                 active
@@ -73,8 +78,53 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-slate-800/80 p-3 text-xs text-slate-500">
-        Localhost · in-memory store
+        Press <kbd className="rounded bg-slate-800 px-1">?</kbd> for shortcuts
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        className="fixed left-4 top-4 z-50 rounded-lg bg-slate-800 p-2 text-slate-300 shadow-lg lg:hidden"
+        aria-label="Open navigation"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex h-screen w-60 flex-col border-r border-slate-800/80 bg-slate-900/95 backdrop-blur transition-transform lg:hidden',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => setMobileOpen(false)}
+          className="absolute right-3 top-5 rounded-lg p-1 text-slate-400 hover:bg-slate-800"
+          aria-label="Close navigation"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        {navContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-slate-800/80 bg-slate-900/50 backdrop-blur lg:flex xl:w-60">
+        {navContent}
+      </aside>
+    </>
   );
 }

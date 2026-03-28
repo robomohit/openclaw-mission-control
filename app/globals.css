@@ -5,3 +5,47 @@
 :root {
   color-scheme: dark;
 }
+
+html {
+  background-color: #020617;
+}
+
+body {
+  background-color: #020617;
+}
+
+/* Prevent flash of white on load */
+html.dark {
+  background-color: #020617;
+}
+
+/* Scrollbar styling for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
+/* Select dropdown dark styling */
+select option {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+/* Date input dark styling */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
