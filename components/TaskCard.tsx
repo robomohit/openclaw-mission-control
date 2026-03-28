@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import {
   AlertCircle,
   Calendar,
@@ -31,8 +30,8 @@ export function TaskCard({
   onOpen?: () => void;
   compact?: boolean;
   draggable?: boolean;
-  onDragStart?: () => void;
-  onDragEnd?: () => void;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
 }) {
   const { getAgent, getProject, user } = useMissionControl();
 
@@ -43,10 +42,7 @@ export function TaskCard({
 
   const project = getProject(task.projectId);
 
-  const priorityStyles: Record<
-    Task['priority'],
-    string
-  > = {
+  const priorityStyles: Record<Task['priority'], string> = {
     low: 'bg-slate-700/80 text-slate-200 ring-slate-600/60',
     medium: 'bg-amber-500/15 text-amber-200 ring-amber-500/30',
     high: 'bg-orange-500/15 text-orange-200 ring-orange-500/35',
@@ -54,13 +50,11 @@ export function TaskCard({
   };
 
   return (
-    <motion.article
-      layout
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
+    <article
       className={cn(
         'group rounded-xl border border-slate-800 bg-slate-900/80 p-4 shadow-sm shadow-black/20 ring-1 ring-white/5 transition hover:border-slate-700 hover:ring-slate-800/80',
         compact && 'p-3',
+        draggable && 'cursor-grab active:cursor-grabbing',
       )}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -163,6 +157,6 @@ export function TaskCard({
           Edit
         </button>
       )}
-    </motion.article>
+    </article>
   );
 }

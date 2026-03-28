@@ -33,12 +33,7 @@ export function OfficeAvatar({
 
   return (
     <motion.div
-      className="absolute flex flex-col items-center"
-      style={{
-        left: `${zone.x + (zone.w * xPct) / 100}%`,
-        top: `${zone.y + (zone.h * yPct) / 100}%`,
-        transform: 'translate(-50%, -50%)',
-      }}
+      className="flex flex-col items-center"
       animate={{
         scale: active ? 1 : 0.96,
         opacity: dimmed ? 0.4 : 1,
@@ -68,7 +63,6 @@ export function OfficeAvatar({
         <p className="line-clamp-2 text-[9px] text-slate-500">{agent.currentWork}</p>
       </div>
 
-      {/* Hover tooltip */}
       {hovered && (
         <motion.div
           initial={{ opacity: 0, y: 4 }}
@@ -84,7 +78,7 @@ export function OfficeAvatar({
               'ml-auto text-[10px] px-1.5 py-0.5 rounded-full',
               active ? 'bg-emerald-500/20 text-emerald-400' : idle ? 'bg-slate-600/40 text-slate-400' : 'bg-slate-700 text-slate-500'
             )}>
-              {statusLabel[agent.status]}
+              {statusLabel[agent.status] ?? agent.status}
             </span>
           </div>
           <div className="space-y-1">
