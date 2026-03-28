@@ -1,0 +1,160 @@
+{
+  "generatedAt": "2026-03-27T20:25:00.000Z",
+  "summary": "Mission Control is currently a fully mock-driven UI. All data originates from sample.json / state.json with no live agent system integration.",
+  "findings": [
+    {
+      "file": "data/sample.json",
+      "line": 1,
+      "area": "Entire data layer",
+      "item": "All agents, tasks, projects, memories, docs, calendar events, activities, office layout, suggested tools",
+      "isMocked": true,
+      "reason": "sample.json is the source-of-truth fallback data loaded by lib/store.tsx. Every entity in it is fabricated."
+    },
+    {
+      "file": "data/state.json",
+      "line": 1,
+      "area": "Persisted state",
+      "item": "Identical copy of sample.json data (with minor model field differences)",
+      "isMocked": true,
+      "reason": "state.json was seeded from sample.json and never updated by a real agent system. All content is placeholder."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "5-8",
+      "area": "Dashboard stats / user",
+      "item": "user.agentStatus: 'Orchestrating · 3 agents active'",
+      "isMocked": true,
+      "reason": "Hardcoded status string, not computed from actual agent activity."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "10-13",
+      "area": "Mission statement",
+      "item": "mission.text and mission.updatedAt",
+      "isMocked": true,
+      "reason": "Placeholder mission statement from March 2025. Not sourced from any config file."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "14-64",
+      "area": "Office screen agents",
+      "item": "5 agents: Claw Prime, Scout, Forge, Relay, Sentinel",
+      "isMocked": true,
+      "reason": "Agent names, roles, specialties, models, and statuses are all fabricated. No connection to actual OpenClaw agent registry."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "65-143",
+      "area": "Task Board",
+      "item": "6 tasks: task-1 through task-6",
+      "isMocked": true,
+      "reason": "All tasks are placeholder items. Assignee IDs, priorities, due dates, tags are invented. Not connected to any task queue."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "144-196",
+      "area": "Projects",
+      "item": "3 projects: Mission Control UI, Operations & Safety, Content & Comms",
+      "isMocked": true,
+      "reason": "Project cards with milestones, progress %, and health indicators are all dummy data."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "197-247",
+      "area": "Memories",
+      "item": "5 memory entries: mem-2025-03-25, mem-2025-03-24, mem-2025-03-20, mem-long-1, mem-2025-03-10",
+      "isMocked": true,
+      "reason": "Memory entries are fictional. Not pulled from actual OpenClaw memory files (MEMORY.md, memory/*.md)."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "248-299",
+      "area": "Docs",
+      "item": "6 documents: doc-arch, doc-prd-mc, doc-research-privacy, doc-planning-ops, doc-draft-comms, doc-content-blog",
+      "isMocked": true,
+      "reason": "Documentation entries are placeholder. Not sourced from actual workspace .md files."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "300-344",
+      "area": "Calendar",
+      "item": "5 calendar events: cal-1 through cal-5",
+      "isMocked": true,
+      "reason": "Calendar events are hardcoded. Not connected to actual OpenClaw cron jobs."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "345-366",
+      "area": "Activity feed",
+      "item": "4 activity items: act-1 through act-4",
+      "isMocked": true,
+      "reason": "Activity entries are fake strings. Not connected to real tool call logs or agent action history."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "367-399",
+      "area": "Office layout",
+      "item": "5 zones and 5 agent positions",
+      "isMocked": true,
+      "reason": "Zone coordinates and agent positions are hardcoded pixel values. Not derived from any real layout system."
+    },
+    {
+      "file": "data/sample.json",
+      "lines": "400-442",
+      "area": "Suggested tools",
+      "item": "8 suggested tool ideas",
+      "isMocked": true,
+      "reason": "Tool suggestions are placeholder ideas, not AI-generated or real backlog items."
+    },
+    {
+      "file": "lib/store.tsx",
+      "lines": "72-82",
+      "area": "State initialization",
+      "item": "cloneSample() fallback and POST initial state",
+      "isMocked": true,
+      "reason": "Store initializes from sample.json when no state.json exists. This is the bootstrap mechanism but means all data originates from mock source."
+    },
+    {
+      "file": "app/settings/page.tsx",
+      "line": 27,
+      "area": "Settings",
+      "item": "defaultValue='openrouter/stepfun/step-3.5-flash:free'",
+      "isMocked": true,
+      "reason": "Agent model input has hardcoded default value. Not persisted or connected to actual config."
+    },
+    {
+      "file": "app/settings/page.tsx",
+      "line": 34,
+      "area": "Settings",
+      "item": "defaultValue={30}",
+      "isMocked": true,
+      "reason": "Auto-refresh interval is hardcoded at 30 seconds. Not persisted."
+    },
+    {
+      "file": "app/office/page.tsx",
+      "lines": "43-47",
+      "area": "Office",
+      "item": "Background gradient SVG and Meeting Zone styling",
+      "isMocked": false,
+      "reason": "These are UI design elements, not data. However, Meeting Zone highlight logic is overly simplistic (any active agent = highlight)."
+    },
+    {
+      "file": "app/page.tsx",
+      "lines": "21-25",
+      "area": "Dashboard",
+      "item": "recentTasks filter uses t.assignee === 'me' || t.assignee === user.id",
+      "isMocked": true,
+      "reason": "Uses legacy 'assignee' field that doesn't exist on the Task type (should be assigneeId). This filter likely returns nothing."
+    }
+  ],
+  "areasSummary": {
+    "Office screen agents": "ALL MOCKED — fabricated agent names, statuses, positions",
+    "Activity feed": "ALL MOCKED — fake strings, no real tool call logging",
+    "Task Board": "ALL MOCKED — placeholder tasks not from any queue",
+    "Calendar": "ALL MOCKED — hardcoded events not from real cron jobs",
+    "Projects": "ALL MOCKED — dummy project cards with invented progress",
+    "Memories": "ALL MOCKED — fictional entries, not from actual memory files",
+    "Docs": "ALL MOCKED — placeholder documents, not from workspace files",
+    "Dashboard stats": "PARTIALLY REAL — computed from mock data (activeTasks, scheduledToday, agentsActive derive from state.json which is itself mocked)"
+  }
+}

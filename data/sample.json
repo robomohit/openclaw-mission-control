@@ -1,0 +1,420 @@
+{
+  "user": {
+    "name": "Mohit",
+    "agentStatus": "Orchestrating · 1 agent active"
+  },
+  "mission": {
+    "text": "Ship reliable OpenClaw automations with human-in-the-loop clarity: fast iteration, traceable decisions, and calm operations.",
+    "updatedAt": "2026-03-27T20:20:00.000Z"
+  },
+  "agents": [
+    {
+      "id": "agent-main",
+      "openclawAgentId": "main",
+      "name": "Claw Prime",
+      "role": "main",
+      "specialty": "Planning, routing, synthesis",
+      "capabilities": ["task routing", "memory hygiene", "Discord updates", "code review prompts"],
+      "model": "openrouter/stepfun/step-3.5-flash:free → openrouter/deepseek/deepseek-r1:free",
+      "environment": "OpenClaw workspace",
+      "status": "active",
+      "currentWork": "Overnight autonomous task list — Mission Control fixes",
+      "handoffRules": "Escalate security or destructive ops; delegate codegen to Cursor CLI path.",
+      "parentId": null,
+      "avatarColor": "#38bdf8"
+    },
+    {
+      "id": "agent-research",
+      "name": "Scout",
+      "role": "sub",
+      "specialty": "Web research & summarization",
+      "capabilities": ["web search", "page fetch", "source triage"],
+      "model": "google/gemini-2.5-flash-lite",
+      "environment": "Browser + MCP",
+      "status": "idle",
+      "currentWork": "Standby",
+      "handoffRules": "Return citations + uncertainty; never exfiltrate private data.",
+      "parentId": "agent-main",
+      "avatarColor": "#a78bfa"
+    },
+    {
+      "id": "agent-coder",
+      "openclawAgentId": "cursor",
+      "name": "Forge",
+      "role": "worker",
+      "specialty": "Implementation & refactors",
+      "capabilities": ["Next.js", "TypeScript", "Tailwind", "API routes"],
+      "model": "openrouter/qwen/qwen-2.5-72b-instruct:free",
+      "environment": "Cursor CLI (Auto mode)",
+      "status": "idle",
+      "currentWork": "Standby — awaiting coding tasks",
+      "handoffRules": "Prefer small PR-sized diffs; match repo conventions.",
+      "parentId": "agent-main",
+      "avatarColor": "#34d399"
+    },
+    {
+      "id": "agent-ops",
+      "name": "Relay",
+      "role": "worker",
+      "specialty": "Notifications & schedules",
+      "capabilities": ["cron", "heartbeats", "Discord posts"],
+      "model": "openrouter/stepfun/step-3.5-flash:free",
+      "environment": "Gateway + cron",
+      "status": "idle",
+      "currentWork": "Standby — next heartbeat sweep pending",
+      "handoffRules": "Batch non-urgent checks; surface blockers within 2 minutes.",
+      "parentId": "agent-main",
+      "avatarColor": "#fbbf24"
+    },
+    {
+      "id": "agent-review",
+      "name": "Sentinel",
+      "role": "sub",
+      "specialty": "Safety & policy",
+      "capabilities": ["red-line review", "PII checks", "git policy reminders"],
+      "model": "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+      "environment": "Isolated sub-sessions",
+      "status": "idle",
+      "currentWork": "Standby",
+      "handoffRules": "No commits/pushes without explicit human approval.",
+      "parentId": "agent-main",
+      "avatarColor": "#f472b6"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Wire React Context store to all pages",
+      "description": "Hydrate from data/sample.json; expose CRUD for tasks and calendar events.",
+      "assigneeId": "agent-coder",
+      "assigneeType": "agent",
+      "priority": "high",
+      "projectId": "proj-mc",
+      "dueDate": "2026-03-27",
+      "status": "done",
+      "tags": ["frontend", "state"],
+      "relatedDocIds": ["doc-arch"],
+      "relatedProjectIds": [],
+      "relatedMemoryIds": ["mem-2026-03-26"],
+      "waitingForHumanReview": false
+    },
+    {
+      "id": "task-2",
+      "title": "SSE real-time state sync",
+      "description": "Add /api/state/stream endpoint using Server-Sent Events; wire EventSource into store.",
+      "assigneeId": "agent-coder",
+      "assigneeType": "agent",
+      "priority": "high",
+      "projectId": "proj-mc",
+      "dueDate": "2026-03-27",
+      "status": "done",
+      "tags": ["sse", "real-time"],
+      "relatedDocIds": ["doc-arch"],
+      "relatedProjectIds": [],
+      "relatedMemoryIds": [],
+      "waitingForHumanReview": false
+    },
+    {
+      "id": "task-3",
+      "title": "Replace all mock data with real agent system data",
+      "description": "Connect memories, docs, cron jobs, and agent status to actual OpenClaw workspace files.",
+      "assigneeId": "agent-main",
+      "assigneeType": "agent",
+      "priority": "high",
+      "projectId": "proj-mc",
+      "dueDate": "2026-03-28",
+      "status": "in_progress",
+      "tags": ["data", "integration"],
+      "relatedDocIds": [],
+      "relatedProjectIds": [],
+      "relatedMemoryIds": ["mem-2026-03-26"],
+      "waitingForHumanReview": false
+    },
+    {
+      "id": "task-4",
+      "title": "Improve Office screen layout and animations",
+      "description": "Grid layout, pulse animations, hover tooltips, meeting zone highlight, idle dimming.",
+      "assigneeId": "agent-coder",
+      "assigneeType": "agent",
+      "priority": "medium",
+      "projectId": "proj-mc",
+      "dueDate": "2026-03-28",
+      "status": "backlog",
+      "tags": ["ux", "office"],
+      "relatedDocIds": ["doc-prd-mc"],
+      "relatedProjectIds": ["proj-docs"],
+      "relatedMemoryIds": [],
+      "waitingForHumanReview": false
+    },
+    {
+      "id": "task-5",
+      "title": "General polish pass — fix layouts and empty states",
+      "description": "Fix broken layouts, verify all 9 screens load without errors, improve empty states.",
+      "assigneeId": "agent-coder",
+      "assigneeType": "agent",
+      "priority": "medium",
+      "projectId": "proj-mc",
+      "dueDate": "2026-03-29",
+      "status": "backlog",
+      "tags": ["polish", "ux"],
+      "relatedDocIds": [],
+      "relatedProjectIds": [],
+      "relatedMemoryIds": [],
+      "waitingForHumanReview": false
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-mc",
+      "name": "Mission Control UI",
+      "description": "Unified OpenClaw dashboard: tasks, calendar, docs, team, office.",
+      "progress": 65,
+      "priority": "high",
+      "milestones": [
+        { "id": "ms-1", "title": "Layout + navigation", "done": true, "dueDate": "2026-03-22" },
+        { "id": "ms-2", "title": "SSE real-time sync", "done": true, "dueDate": "2026-03-27" },
+        { "id": "ms-3", "title": "Real data integration", "done": false, "dueDate": "2026-03-28" }
+      ],
+      "linkedTaskIds": ["task-1", "task-2", "task-3", "task-4", "task-5"],
+      "linkedDocIds": ["doc-arch"],
+      "linkedMemoryIds": ["mem-2026-03-26"],
+      "lastWorkedOn": "2026-03-27T20:21:00.000Z",
+      "suggestedNextAction": "Complete mock data replacement, then Office screen improvements.",
+      "health": "healthy"
+    },
+    {
+      "id": "proj-docs",
+      "name": "Documentation & guides",
+      "description": "Workspace docs, policies, and onboarding content.",
+      "progress": 20,
+      "priority": "medium",
+      "milestones": [
+        { "id": "ms-d1", "title": "Cross-link MC tasks to policy docs", "done": false, "dueDate": "2026-04-01" }
+      ],
+      "linkedTaskIds": ["task-4"],
+      "linkedDocIds": ["doc-agents", "doc-soul"],
+      "linkedMemoryIds": [],
+      "lastWorkedOn": "2026-03-27T18:00:00.000Z",
+      "suggestedNextAction": "Keep AGENTS.md and SOUL.md discoverable from the dashboard.",
+      "health": "attention"
+    }
+  ],
+  "memories": [
+    {
+      "id": "mem-2026-03-26",
+      "title": "Workspace initialization & ForgeERP fixes",
+      "content": "First session: established Claw identity, SOUL.md, USER.md. Then completed 9 ForgeERP fixes: config drift, migrations, Swagger, dashboard bug, Jest tests, CI/CD, security/observability, docs, env fixes.",
+      "kind": "daily",
+      "date": "2026-03-26",
+      "tags": ["init", "forgeerp", "cursor"],
+      "topic": "Workspace Setup",
+      "person": "Mohit",
+      "linkedProjectIds": [],
+      "linkedDocIds": [],
+      "linkedTaskIds": []
+    },
+    {
+      "id": "mem-2026-03-27-0839",
+      "title": "Mission Control sync & model audit",
+      "content": "Discord session: checked Cursor SSE progress, audited agent models, started mock audit. Discovered mission-control-integration skill. Identified that activity feed and calendar need real data sources.",
+      "kind": "daily",
+      "date": "2026-03-27",
+      "tags": ["mission-control", "audit", "discord"],
+      "topic": "Mission Control",
+      "person": "Mohit",
+      "linkedProjectIds": ["proj-mc"],
+      "linkedDocIds": ["doc-arch"],
+      "linkedTaskIds": ["task-3"]
+    },
+    {
+      "id": "mem-2026-03-27-overnight",
+      "title": "Overnight autonomous task execution",
+      "content": "Mohit sent overnight task list via Telegram. Working through: critical fixes (no localhost fetch, fix read paths), SSE verification, agent model audit, mock audit, real data replacement, Office improvements, polish pass, morning report.",
+      "kind": "daily",
+      "date": "2026-03-27",
+      "tags": ["overnight", "mission-control", "autonomous"],
+      "topic": "Mission Control",
+      "person": "Mohit",
+      "linkedProjectIds": ["proj-mc"],
+      "linkedDocIds": [],
+      "linkedTaskIds": ["task-1", "task-2", "task-3"]
+    },
+    {
+      "id": "mem-long-1",
+      "title": "Security boundary for MEMORY.md",
+      "content": "MEMORY.md is main-session only; never load in shared contexts. Treat as sensitive personal context. Aligned with AGENTS.md red lines.",
+      "kind": "long_term",
+      "date": "2026-03-26",
+      "tags": ["security", "memory"],
+      "topic": "Policy",
+      "person": "Mohit",
+      "linkedProjectIds": [],
+      "linkedDocIds": [],
+      "linkedTaskIds": []
+    }
+  ],
+  "docs": [
+    {
+      "id": "doc-arch",
+      "title": "Mission Control — Frontend architecture",
+      "kind": "architecture",
+      "category": "Engineering",
+      "tags": ["nextjs", "context", "tailwind", "sse"],
+      "projectId": "proj-mc",
+      "agentId": "agent-coder",
+      "updatedAt": "2026-03-27T20:20:00.000Z",
+      "body": "App Router layouts wrap a client Provider. State lives in lib/store.tsx via React Context. SSE endpoint at /api/state/stream provides real-time updates via EventSource. data/state.json is the source of truth on disk."
+    },
+    {
+      "id": "doc-agents",
+      "title": "AGENTS.md — Workspace agent rules",
+      "kind": "planning",
+      "category": "Policy",
+      "tags": ["agents", "rules", "git", "safety"],
+      "projectId": null,
+      "agentId": "agent-main",
+      "updatedAt": "2026-03-26T18:12:00.000Z",
+      "body": "Session startup sequence, memory management, red lines (no git commit/push without approval), group chat behavior, heartbeat rules, model routing, Cursor CLI preferences."
+    },
+    {
+      "id": "doc-soul",
+      "title": "SOUL.md — Agent identity & persona",
+      "kind": "architecture",
+      "category": "Identity",
+      "tags": ["persona", "identity", "boundaries"],
+      "projectId": null,
+      "agentId": "agent-main",
+      "updatedAt": "2026-03-26T18:12:00.000Z",
+      "body": "Core truths: be genuinely helpful, have opinions, be resourceful before asking, earn trust through competence, remember you're a guest. Boundaries: private things stay private, ask before acting externally."
+    },
+    {
+      "id": "doc-tools",
+      "title": "TOOLS.md — Local setup notes",
+      "kind": "planning",
+      "category": "Setup",
+      "tags": ["cursor", "openclaw", "secrets"],
+      "projectId": null,
+      "agentId": "agent-main",
+      "updatedAt": "2026-03-26T00:24:00.000Z",
+      "body": "Cursor Agent CLI at %LOCALAPPDATA%\\cursor-agent. Gateway auth at 127.0.0.1:18789. Model stack: Step 3.5 Flash → DeepSeek V3 → Gemini Flash-Lite → Kilo auto."
+    },
+    {
+      "id": "doc-memory",
+      "title": "MEMORY.md — Long-term memory",
+      "kind": "research",
+      "category": "Memory",
+      "tags": ["forgeerp", "prisma", "security", "ci"],
+      "projectId": null,
+      "agentId": "agent-main",
+      "updatedAt": "2026-03-26T18:12:00.000Z",
+      "body": "ForgeERP fixes completed 2026-03-26: config drift, migrations, Swagger, dashboard bug, tests, CI/CD, security, docs, env. Remaining: multi-tenancy (deferred). Takeaways: Cursor CLI effective for multi-file changes, Prisma migrations need shadow DB workaround."
+    }
+  ],
+  "calendarEvents": [
+    {
+      "id": "cron-weekly-pulse",
+      "title": "Weekly Monday 9am check-in",
+      "start": "2026-03-30T09:00:00.000Z",
+      "end": "2026-03-30T09:10:00.000Z",
+      "kind": "cron",
+      "taskId": null,
+      "projectId": null,
+      "why": "Skim memory files and summarize anything needing human follow-up.",
+      "confirmed": true,
+      "status": "active"
+    }
+  ],
+  "activities": [
+    {
+      "id": "act-real-1",
+      "agentId": "agent-main",
+      "message": "Completed overnight critical fixes: verified SSE implementation uses fs.readFile (no localhost fetch), confirmed absolute paths in route.ts.",
+      "timestamp": "2026-03-27T20:22:00.000Z"
+    },
+    {
+      "id": "act-real-2",
+      "agentId": "agent-main",
+      "message": "Audited all 5 agent models. Updated Claw Prime, Forge, and Relay to confirmed free OpenRouter models.",
+      "timestamp": "2026-03-27T20:23:00.000Z"
+    },
+    {
+      "id": "act-real-3",
+      "agentId": "agent-main",
+      "message": "Completed full mock audit: 18 findings across all screens. Saved to data/mock-audit.json.",
+      "timestamp": "2026-03-27T20:24:00.000Z"
+    },
+    {
+      "id": "act-real-4",
+      "agentId": "agent-main",
+      "message": "Replaced mock memories/docs/calendar with real data from workspace memory/*.md, cron jobs, and .md files.",
+      "timestamp": "2026-03-27T20:25:00.000Z"
+    }
+  ],
+  "office": {
+    "zones": [
+      { "id": "z-north", "label": "North desks", "x": 8, "y": 10, "w": 84, "h": 28, "kind": "desk" },
+      { "id": "z-east", "label": "East pod", "x": 62, "y": 42, "w": 30, "h": 38, "kind": "desk" },
+      { "id": "z-meet", "label": "Huddle", "x": 12, "y": 44, "w": 44, "h": 34, "kind": "meeting" },
+      { "id": "z-collab", "label": "Collab bench", "x": 10, "y": 78, "w": 38, "h": 14, "kind": "collab" },
+      { "id": "z-hall", "label": "Hall", "x": 52, "y": 78, "w": 40, "h": 14, "kind": "hall" }
+    ],
+    "agentPositions": [
+      { "agentId": "agent-main", "zoneId": "z-meet", "xPct": 52, "yPct": 58 },
+      { "agentId": "agent-research", "zoneId": "z-north", "xPct": 30, "yPct": 22 },
+      { "agentId": "agent-coder", "zoneId": "z-east", "xPct": 76, "yPct": 58 },
+      { "agentId": "agent-ops", "zoneId": "z-collab", "xPct": 28, "yPct": 84 },
+      { "agentId": "agent-review", "zoneId": "z-hall", "xPct": 68, "yPct": 84 }
+    ]
+  },
+  "suggestedTools": [
+    {
+      "id": "tool-1",
+      "title": "One-click JSON export for tasks + events",
+      "rationale": "You iterate quickly on the board; backups before DB will prevent thrash.",
+      "impact": "high"
+    },
+    {
+      "id": "tool-2",
+      "title": "Slack/Telegram mirror for heartbeat summaries",
+      "rationale": "You balance Discord + other channels; mirrored digests reduce context switching.",
+      "impact": "medium"
+    },
+    {
+      "id": "tool-3",
+      "title": "Risk tag on tasks waiting for human review",
+      "rationale": "Several tasks gate on policy; a dedicated queue speeds approvals.",
+      "impact": "high"
+    },
+    {
+      "id": "tool-4",
+      "title": "Doc diff viewer for PRDs vs implementation",
+      "rationale": "Architecture and PRD docs drift; inline diff would catch scope creep early.",
+      "impact": "medium"
+    },
+    {
+      "id": "tool-5",
+      "title": "Calendar import from ICS (read-only)",
+      "rationale": "Human blocks often live in external calendars first.",
+      "impact": "medium"
+    },
+    {
+      "id": "tool-6",
+      "title": "Office focus mode dimming idle agents",
+      "rationale": "Reduces visual noise when only one worker is active overnight.",
+      "impact": "low"
+    },
+    {
+      "id": "tool-7",
+      "title": "Project momentum sparkline (7-day activity)",
+      "rationale": "Neglected projects need a gentle trend, not just a static health label.",
+      "impact": "medium"
+    },
+    {
+      "id": "tool-8",
+      "title": "Memory graph: link traversal",
+      "rationale": "Jumping task to doc to memory visually would match how you reason about decisions.",
+      "impact": "high"
+    }
+  ],
+  "statsHistory": []
+}
