@@ -9,6 +9,8 @@ import {
   Home,
   LayoutGrid,
   Menu,
+  MessageSquare,
+  MonitorPlay,
   Settings,
   Sparkles,
   Users,
@@ -16,7 +18,6 @@ import {
   Briefcase,
   X,
   Zap,
-  MessageSquare,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -31,6 +32,7 @@ const nav = [
   { href: '/docs', label: 'Docs', icon: FileText },
   { href: '/team', label: 'Team', icon: Users },
   { href: '/office', label: 'Office', icon: Cpu },
+  { href: '/computer', label: 'Computer', icon: MonitorPlay },
   { href: '/chat', label: 'Live run', icon: Zap },
   { href: '/sessions', label: 'Sessions', icon: MessageSquare },
   { href: '/settings', label: 'Settings', icon: Settings },
