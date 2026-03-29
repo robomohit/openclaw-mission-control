@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type {
@@ -1220,3 +1220,111 @@ export const db = {
   },
   path: DB_PATH,
 };
+
+// ---------------------------------------------------------------------------
+// Atomic JSON persistence helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Write JSON to `STATE_JSON_PATH` atomically: serialize → write temp → rename.
+ * Prevents partial files from concurrent writes or crashes mid-write.
+ */
+export function atomicWriteStateJson(data: SampleData): void {
+  ensureDataDirSync();
+  const serialized = JSON.stringify(data, null, 2);
+  // Validate round-trip before committing
+  JSON.parse(serialized);
+  const tmpPath = STATE_JSON_PATH + `.tmp-${process.pid}-${Date.now()}`;
+  try {
+    writeFileSync(tmpPath, serialized, 'utf-8');
+    renameSync(tmpPath, STATE_JSON_PATH);
+  } catch (err) {
+    // Clean up temp file on failure
+    try { unlinkSync(tmpPath); } catch { /* ignore */ }
+    throw err;
+  }
+}
+
+/**
+ * Read and parse `STATE_JSON_PATH` safely. Returns `null` on missing file,
+ * corrupt JSON, or empty content — never throws to callers.
+ */
+export function safeReadStateJson(): SampleData | null {
+  try {
+    if (!existsSync(STATE_JSON_PATH)) return null;
+    const raw = readFileSync(STATE_JSON_PATH, 'utf-8');
+    if (!raw.trim()) return null;
+    const parsed = JSON.parse(raw) as Partial<SampleData>;
+    return coerceSampleData(parsed);
+  } catch (err) {
+    console.warn(
+      'safeReadStateJson: state.json is corrupt or unreadable, treating as empty.',
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
+/** Deep-merge `incoming` into `existing` for known top-level SampleData keys.
+ *  Arrays are replaced wholesale (not concatenated) to match store semantics.
+ *  Scalar/object keys like `user` and `mission` are shallow-merged.
+ *  Pass `replace: true` in the request body to skip merge entirely. */
+export function deepMergeState(
+  existing: Partial<SampleData>,
+  incoming: Partial<SampleData>,
+): SampleData {
+  const merged: Partial<SampleData> = { ...existing };
+
+  // Shallow-merge nested object keys
+  if (incoming.user) {
+    merged.user = { ...(existing.user ?? { name: '', agentStatus: '' }), ...incoming.user };
+  }
+  if (incoming.mission) {
+    merged.mission = {
+      ...(existing.mission ?? { text: '', updatedAt: new Date().toISOString() }),
+      ...incoming.mission,
+    };
+  }
+  if (incoming.office) {
+    merged.office = incoming.office;
+  }
+
+  // Array keys: replace if present in incoming
+  const arrayKeys = [
+    'agents', 'tasks', 'projects', 'memories', 'docs',
+    'calendarEvents', 'activities', 'suggestedTools', 'statsHistory',
+  ] as const;
+  for (const key of arrayKeys) {
+    if (Array.isArray(incoming[key])) {
+      (merged as Record<string, unknown>)[key] = incoming[key];
+    }
+  }
+
+  return coerceSampleData(merged);
+}
+
+// ---------------------------------------------------------------------------
+// Persistence info (for Settings / diagnostics)
+// ---------------------------------------------------------------------------
+
+export interface PersistenceInfo {
+  mode: 'sqlite' | 'json';
+  sqliteAvailable: boolean;
+  sqliteError: string | null;
+  dbPath: string;
+  jsonPath: string;
+  dataDir: string;
+}
+
+export function getPersistenceInfo(): PersistenceInfo {
+  const sqliteAvailable = isSqliteEnabled();
+  const err = getLastSqliteInitError();
+  return {
+    mode: sqliteAvailable ? 'sqlite' : 'json',
+    sqliteAvailable,
+    sqliteError: err instanceof Error ? err.message : err ? String(err) : null,
+    dbPath: DB_PATH,
+    jsonPath: STATE_JSON_PATH,
+    dataDir: DATA_DIR,
+  };
+}

@@ -1,10 +1,41 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
-import { RotateCcw } from 'lucide-react';
+import {
+  AlertTriangle,
+  Database,
+  FileJson,
+  FolderOpen,
+  HardDrive,
+  RotateCcw,
+  Server,
+} from 'lucide-react';
+
+interface PersistenceInfo {
+  mode: 'sqlite' | 'json';
+  sqliteAvailable: boolean;
+  sqliteError: string | null;
+  dbPath: string;
+  jsonPath: string;
+  dataDir: string;
+}
+
+interface StateInfo {
+  persistence: PersistenceInfo;
+  logDir: {
+    path: string;
+    readable: boolean;
+    fileCount: number;
+    lastMtime: string | null;
+  };
+  gateway: {
+    host: string;
+    port: string;
+  };
+}
 
 export default function SettingsPage() {
   const { resetStore } = useStore();
@@ -15,6 +46,16 @@ export default function SettingsPage() {
   const [gitError, setGitError] = useState<string | null>(null);
   const [loadingRead, setLoadingRead] = useState(false);
   const [loadingGit, setLoadingGit] = useState(false);
+  const [stateInfo, setStateInfo] = useState<StateInfo | null>(null);
+
+  useEffect(() => {
+    fetch('/api/state/info')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setStateInfo(data as StateInfo);
+      })
+      .catch(() => {});
+  }, []);
 
   const tryRead = useCallback(async () => {
     setReadError(null);
@@ -71,6 +112,10 @@ export default function SettingsPage() {
     toast.success('State reset to defaults');
   };
 
+  const persistence = stateInfo?.persistence;
+  const logDir = stateInfo?.logDir;
+  const gateway = stateInfo?.gateway;
+
   return (
     <ErrorBoundary fallbackTitle="Settings crashed">
       <div className="space-y-6">
@@ -80,6 +125,103 @@ export default function SettingsPage() {
           Theme, model, refresh interval, and notification toggles below are{' '}
           <span className="text-slate-400">local UI only</span> — they are not saved to a backend or agent config yet.
         </p>
+
+        {/* Persistence mode banner */}
+        {persistence && persistence.mode === 'json' && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+            <FileJson className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden />
+            <div>
+              <p className="text-sm font-medium text-amber-200">Using JSON file persistence</p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                SQLite (<code className="text-slate-500">better-sqlite3</code>) is not available
+                {persistence.sqliteError ? ` — ${persistence.sqliteError}` : ''}.
+                State is saved to <code className="text-slate-400">{persistence.jsonPath}</code>.
+                This is fine for development; install <code className="text-slate-500">better-sqlite3</code> for production use.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {persistence && persistence.mode === 'sqlite' && (
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+            <Database className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+            <div>
+              <p className="text-sm font-medium text-emerald-200">SQLite persistence active</p>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Data stored in <code className="text-slate-400">{persistence.dbPath}</code>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Diagnostics card */}
+        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+          <h2 className="text-lg font-semibold text-slate-100 mb-4 flex items-center gap-2">
+            <Server className="h-5 w-5 text-slate-400" aria-hidden />
+            Diagnostics
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Log directory */}
+            <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FolderOpen className="h-4 w-4 text-slate-400" aria-hidden />
+                <span className="text-sm font-medium text-slate-200">OpenClaw Log Directory</span>
+              </div>
+              {logDir ? (
+                <>
+                  <p className="text-xs text-slate-400 font-mono break-all">{logDir.path}</p>
+                  {logDir.readable ? (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-slate-400">
+                        <span className="text-emerald-400">{logDir.fileCount}</span> log file{logDir.fileCount === 1 ? '' : 's'} found
+                      </p>
+                      {logDir.lastMtime && (
+                        <p className="text-xs text-slate-400">
+                          Last modified: <span className="text-slate-300">{new Date(logDir.lastMtime).toLocaleString()}</span>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-start gap-1.5">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 text-amber-400 shrink-0" aria-hidden />
+                      <p className="text-xs text-amber-300">
+                        Directory not readable. Set <code className="text-slate-400">OPENCLAW_LOG_DIR</code> in{' '}
+                        <code className="text-slate-400">.env.local</code> to the path where OpenClaw writes logs.
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-slate-500">Loading...</p>
+              )}
+            </div>
+
+            {/* Gateway */}
+            <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <HardDrive className="h-4 w-4 text-slate-400" aria-hidden />
+                <span className="text-sm font-medium text-slate-200">Gateway</span>
+              </div>
+              {gateway ? (
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-400">
+                    Host: <code className="text-slate-300">{gateway.host}</code>
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Port: <code className="text-slate-300">{gateway.port}</code>
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Override with <code className="text-slate-500">NEXT_PUBLIC_OPENCLAW_GATEWAY_HOST</code> and{' '}
+                    <code className="text-slate-500">NEXT_PUBLIC_OPENCLAW_GATEWAY_PORT</code> in{' '}
+                    <code className="text-slate-500">.env.local</code>.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">Loading...</p>
+              )}
+            </div>
+          </div>
+        </div>
 
         <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
           <div className="space-y-4">
@@ -132,7 +274,17 @@ export default function SettingsPage() {
                 <div className="font-medium text-slate-100">Data Storage</div>
                 <div className="text-sm text-slate-400">Where Mission Control stores its data</div>
               </div>
-              <div className="text-slate-300 text-sm">SQLite + JSON fallback (<code className="text-slate-400">data/</code>)</div>
+              <div className="text-slate-300 text-sm">
+                {persistence ? (
+                  persistence.mode === 'sqlite' ? (
+                    <>SQLite (<code className="text-slate-400">{persistence.dbPath}</code>)</>
+                  ) : (
+                    <>JSON fallback (<code className="text-slate-400">{persistence.jsonPath}</code>)</>
+                  )
+                ) : (
+                  <>SQLite + JSON fallback (<code className="text-slate-400">data/</code>)</>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -166,7 +318,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="text-sm font-medium text-slate-200 mb-1">
-                <code className="text-sky-400">GET /api/tools/read?path=…</code>
+                <code className="text-sky-400">GET /api/tools/read?path=...</code>
               </div>
               <p className="text-xs text-slate-500 mb-2">UTF-8 text only, max 512KB.</p>
               <div className="flex flex-wrap gap-2 items-center">
@@ -183,7 +335,7 @@ export default function SettingsPage() {
                   disabled={loadingRead}
                   className="rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-sm px-4 py-2"
                 >
-                  {loadingRead ? 'Reading…' : 'Try read'}
+                  {loadingRead ? 'Reading...' : 'Try read'}
                 </button>
               </div>
               {readError && <p className="mt-2 text-sm text-rose-400">{readError}</p>}
@@ -207,7 +359,7 @@ export default function SettingsPage() {
                 disabled={loadingGit}
                 className="rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-100 text-sm px-4 py-2"
               >
-                {loadingGit ? 'Running…' : 'Try git status'}
+                {loadingGit ? 'Running...' : 'Try git status'}
               </button>
               {gitError && <p className="mt-2 text-sm text-rose-400">{gitError}</p>}
               {gitResult !== null && (

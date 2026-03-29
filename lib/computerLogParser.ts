@@ -145,16 +145,18 @@ export async function readComputerStepsFromTodayLog(options: {
       const step = recordToComputerStep(obj, i++);
       if (step) steps.push(step);
     } catch {
-      // plain text line
+      // plain text line — no embedded timestamp available; mark as ingested time
       const c = classifyComputerStep(trimmed, 'info');
+      const ingestedAt = new Date().toISOString();
       const step: ComputerStep = {
         id: stableId(`${i++}\0${trimmed.slice(0, 120)}`),
         lane: c.lane,
         title: c.title,
         detail: trimmed.length > 500 ? `${trimmed.slice(0, 497)}…` : trimmed,
-        timestamp: new Date().toISOString(),
+        timestamp: ingestedAt,
         level: 'info',
         urls: extractUrls(trimmed),
+        ingestedAt: true,
       };
       steps.push(step);
     }
