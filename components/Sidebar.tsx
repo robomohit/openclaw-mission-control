@@ -78,7 +78,8 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-slate-800/80 p-3 text-xs text-slate-500">
-        Press <kbd className="rounded bg-slate-800 px-1">?</kbd> for shortcuts
+        Press <kbd className="rounded bg-slate-800 px-1">?</kbd> for shortcuts · local state +
+        OpenClaw polling
       </div>
     </>
   );
