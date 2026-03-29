@@ -1,25 +1,9 @@
 import { createHash } from 'crypto';
 
 import { getOpenclawLogDir } from '@/lib/openclawLog';
+import type { ComputerLane, ComputerStep } from '@/lib/computerStepTypes';
 
-export type ComputerLane =
-  | 'agent'
-  | 'browser'
-  | 'tools'
-  | 'cron'
-  | 'channel'
-  | 'system'
-  | 'error';
-
-export interface ComputerStep {
-  id: string;
-  lane: ComputerLane;
-  title: string;
-  detail: string;
-  timestamp: string;
-  level: 'info' | 'warn' | 'error';
-  urls: string[];
-}
+export type { ComputerLane, ComputerStep } from '@/lib/computerStepTypes';
 
 const URL_RE = /https?:\/\/[^\s"'<>[\]()]+/gi;
 

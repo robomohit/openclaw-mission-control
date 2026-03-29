@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
+  Bot,
   Cpu,
   Radio,
   Search,
@@ -10,8 +11,10 @@ import {
   SlidersHorizontal,
   Terminal,
   User,
+  Wrench,
 } from 'lucide-react';
 
+import type { ComputerLane, ComputerStep } from '@/lib/computerStepTypes';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +35,98 @@ interface LogFeedRow {
 
 const LOG_BUFFER_MAX = 48_000;
 const GRID_VIEWPORT = 'lg:min-h-[calc(100dvh-9rem)] lg:max-h-[calc(100dvh-9rem)]';
+
+/** Lanes we surface as “agent / tools” style activity (log-derived, not gateway tool JSON). */
+const AGENT_TOOL_LANES = new Set<ComputerLane>([
+  'tools',
+  'agent',
+  'browser',
+  'error',
+]);
+
+const AGENT_TOOL_STEP_CAP = 120;
+
+function useAgentToolStepsStream(enabled: boolean) {
+  const [steps, setSteps] = useState<ComputerStep[]>([]);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const seenIds = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await fetch(
+          '/api/openclaw/computer-steps?lane=tools,agent,browser,error&limit=100&maxLines=6000',
+        );
+        if (!r.ok || cancelled) return;
+        const j = (await r.json()) as { steps?: ComputerStep[] };
+        const list = Array.isArray(j.steps) ? j.steps : [];
+        if (cancelled) return;
+        setSteps(list.filter((s) => AGENT_TOOL_LANES.has(s.lane)));
+        seenIds.current = new Set(list.map((s) => s.id));
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const es = new EventSource('/api/openclaw/computer-stream');
+    const onErr = () => {
+      setConnected(false);
+      setError('Step stream disconnected (retrying…)');
+    };
+    es.addEventListener('open', () => {
+      setConnected(true);
+      setError(null);
+    });
+    es.addEventListener('error', onErr);
+    es.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data) as {
+          type?: string;
+          step?: ComputerStep;
+          message?: string;
+        };
+        if (msg.type === 'ready') {
+          setConnected(true);
+          setError(null);
+          return;
+        }
+        if (msg.type === 'error' && msg.message) {
+          setError(msg.message);
+          return;
+        }
+        if (msg.type === 'step' && msg.step) {
+          const s = msg.step;
+          if (!AGENT_TOOL_LANES.has(s.lane as ComputerLane)) return;
+          if (seenIds.current.has(s.id)) return;
+          seenIds.current.add(s.id);
+          setSteps((prev) => {
+            const next = [s, ...prev];
+            return next.length > AGENT_TOOL_STEP_CAP
+              ? next.slice(0, AGENT_TOOL_STEP_CAP)
+              : next;
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    return () => {
+      es.removeEventListener('error', onErr);
+      es.close();
+    };
+  }, [enabled]);
+
+  return { steps, connected, error };
+}
 
 function useOpenClawLiveLog(enabled: boolean) {
   const [logText, setLogText] = useState('');
@@ -210,6 +305,11 @@ export default function ChatPage() {
   } = useLogFeed(6000);
   const { logText, connected: logConnected, error: logError } =
     useOpenClawLiveLog(true);
+  const {
+    steps: agentToolSteps,
+    connected: stepStreamConnected,
+    error: stepStreamError,
+  } = useAgentToolStepsStream(true);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -254,7 +354,14 @@ export default function ChatPage() {
             GET /api/openclaw/log-feed
           </code>{' '}
           (search, source, level, hide heartbeats, time range). Raw log tail
-          streams over SSE below.
+          streams over SSE below.{' '}
+          <strong className="font-medium text-slate-400">
+            This is not a gateway chat session
+          </strong>
+          : your notes stay in the browser; OpenClaw activity is inferred from
+          log files. For Cursor/Manus-style “message the agent + structured tool
+          events,” Mission Control would need to proxy the OpenClaw gateway
+          WebSocket (or an official HTTP stream) with auth — not wired here yet.
         </p>
       </div>
 
@@ -479,6 +586,79 @@ export default function ChatPage() {
                   </li>
                 );
               })}
+            </ul>
+          </div>
+
+          <div
+            className={cn(
+              'flex max-h-[min(280px,32vh)] min-h-[140px] flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40 ring-1 ring-violet-500/10',
+            )}
+          >
+            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-800 px-4 py-2.5">
+              <Wrench className="h-4 w-4 text-violet-400" aria-hidden />
+              <Bot className="h-4 w-4 text-sky-400" aria-hidden />
+              <span className="text-sm font-medium text-slate-200">
+                Agent &amp; tools (live)
+              </span>
+              <span
+                className={cn(
+                  'rounded px-1.5 py-0.5 text-[10px] font-medium uppercase',
+                  stepStreamConnected
+                    ? 'bg-violet-500/15 text-violet-300'
+                    : 'bg-slate-800 text-slate-500',
+                )}
+              >
+                {stepStreamConnected ? 'sse' : '…'}
+              </span>
+              <span className="text-[10px] text-slate-600">
+                Parsed from OpenClaw JSONL · same as /computer lanes
+              </span>
+              {stepStreamError && (
+                <span className="text-[10px] text-amber-400">
+                  {stepStreamError}
+                </span>
+              )}
+            </div>
+            <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain p-2">
+              {agentToolSteps.length === 0 && (
+                <li className="px-2 py-3 text-[11px] text-slate-500">
+                  No tool/agent/browser/error steps yet. When OpenClaw logs
+                  gateway, tools, or browser lines, they appear here in near
+                  real time (not full tool-args JSON like Cursor — only what the
+                  logger prints).
+                </li>
+              )}
+              {agentToolSteps.map((s) => (
+                <li
+                  key={s.id}
+                  className="rounded-lg border border-slate-800/90 bg-slate-950/50 px-2.5 py-1.5"
+                >
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span
+                      className={cn(
+                        'rounded px-1 py-0.5 text-[9px] font-bold uppercase',
+                        s.lane === 'tools' &&
+                          'bg-amber-500/15 text-amber-300',
+                        s.lane === 'agent' && 'bg-sky-500/15 text-sky-300',
+                        s.lane === 'browser' &&
+                          'bg-fuchsia-500/15 text-fuchsia-300',
+                        s.lane === 'error' && 'bg-rose-500/20 text-rose-200',
+                      )}
+                    >
+                      {s.lane}
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-200">
+                      {s.title}
+                    </span>
+                    <span className="text-[9px] text-slate-600">
+                      {s.timestamp}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 line-clamp-2 font-mono text-[10px] leading-snug text-slate-500">
+                    {s.detail}
+                  </p>
+                </li>
+              ))}
             </ul>
           </div>
 
