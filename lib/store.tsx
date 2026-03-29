@@ -285,10 +285,18 @@ export function MissionControlProvider({
 
     let source: EventSource | null = null;
     let stopped = false;
+    let backoffMs = 1_000;
+    const BACKOFF_MAX = 30_000;
+    const BACKOFF_RESET_AFTER = 60_000; // reset backoff after 60s connected
+    let connectedSince = 0;
 
     const connect = () => {
       if (stopped) return;
       source = new EventSource('/api/state/stream');
+
+      source.addEventListener('open', () => {
+        connectedSince = Date.now();
+      });
 
       source.onmessage = (event) => {
         if (event.data === 'heartbeat') return;
@@ -307,10 +315,16 @@ export function MissionControlProvider({
           source = null;
         }
         if (stopped) return;
+        // Reset backoff if we were connected long enough
+        if (connectedSince > 0 && Date.now() - connectedSince > BACKOFF_RESET_AFTER) {
+          backoffMs = 1_000;
+        }
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
-        reconnectTimeoutRef.current = setTimeout(connect, 2_000);
+        reconnectTimeoutRef.current = setTimeout(connect, backoffMs);
+        // Exponential backoff with jitter, capped at BACKOFF_MAX
+        backoffMs = Math.min(backoffMs * 2 + Math.random() * 500, BACKOFF_MAX);
       };
     };
 

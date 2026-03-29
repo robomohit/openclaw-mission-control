@@ -66,8 +66,11 @@ export async function GET() {
       return NextResponse.json(result, { status: 503 });
     }
     Object.assign(result, sanitizedChannelsFromConfig(config as Record<string, unknown>));
-  } catch (e: any) {
-    if (e.code === 'ENOENT') {
+  } catch (e: unknown) {
+    const code = e && typeof e === 'object' && 'code' in e
+      ? (e as NodeJS.ErrnoException).code
+      : undefined;
+    if (code === 'ENOENT') {
       result.configMissing = true;
     }
     Object.assign(result, sanitizedChannelsFromConfig({}));

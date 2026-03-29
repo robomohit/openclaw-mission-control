@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mkdir, readFile, writeFile } from 'fs/promises';
 
 import {
-  coerceSampleData,
-  DATA_DIR,
+  atomicWriteStateJson,
+  deepMergeState,
   isSqliteEnabled,
   readMissionState,
-  STATE_JSON_PATH,
+  safeReadStateJson,
   writeMissionState,
 } from '@/lib/db';
 import { publishStateUpdate } from '@/lib/stateBroadcast';
 
-export const runtime = 'nodejs';
+import type { SampleData } from '@/lib/types';
 
-async function ensureDataDir(): Promise<void> {
-  await mkdir(DATA_DIR, { recursive: true });
-}
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {
@@ -30,20 +27,12 @@ export async function GET() {
     console.error('GET /api/state SQLite read failed, falling back to JSON:', e);
   }
 
-  try {
-    await ensureDataDir();
-    const raw = await readFile(STATE_JSON_PATH, 'utf8');
-    return NextResponse.json(JSON.parse(raw));
-  } catch (error: unknown) {
-    const code =
-      error && typeof error === 'object' && 'code' in error
-        ? (error as NodeJS.ErrnoException).code
-        : undefined;
-    if (code === 'ENOENT') {
-      return new NextResponse(null, { status: 204 });
-    }
-    return NextResponse.json({ error: 'Failed to read state' }, { status: 500 });
+  // JSON fallback
+  const state = safeReadStateJson();
+  if (state) {
+    return NextResponse.json(state);
   }
+  return new NextResponse(null, { status: 204 });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,31 +43,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
     }
 
-    let existing: Record<string, unknown> = {};
-    try {
-      if (isSqliteEnabled()) {
-        const s = readMissionState();
-        if (s) existing = s as unknown as Record<string, unknown>;
-      } else {
-        try {
-          await ensureDataDir();
-          const raw = await readFile(STATE_JSON_PATH, 'utf8');
-          existing = JSON.parse(raw) as Record<string, unknown>;
-        } catch {
-          // File missing or corrupt — use body as new state
+    // `replace: true` in the body skips merge and overwrites entirely
+    const replaceMode = body.replace === true;
+
+    let existing: Partial<SampleData> = {};
+    if (!replaceMode) {
+      try {
+        if (isSqliteEnabled()) {
+          const s = readMissionState();
+          if (s) existing = s;
+        } else {
+          const s = safeReadStateJson();
+          if (s) existing = s;
         }
+      } catch (e) {
+        console.error('POST /api/state: failed to read existing state', e);
       }
-    } catch (e) {
-      console.error('POST /api/state: failed to read existing state', e);
     }
 
-    const merged = coerceSampleData({
-      ...existing,
-      ...body,
-    } as Parameters<typeof coerceSampleData>[0]);
-
-    const serialized = JSON.stringify(merged, null, 2);
-    JSON.parse(serialized);
+    // Deep-merge known top-level keys instead of shallow spread
+    const merged = deepMergeState(existing, body as Partial<SampleData>);
 
     try {
       if (isSqliteEnabled()) {
@@ -90,8 +74,8 @@ export async function POST(request: NextRequest) {
       console.error('POST /api/state SQLite write failed, falling back to JSON:', e);
     }
 
-    await ensureDataDir();
-    await writeFile(STATE_JSON_PATH, serialized, 'utf-8');
+    // Atomic JSON write: temp file + rename
+    atomicWriteStateJson(merged);
     publishStateUpdate(merged);
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {

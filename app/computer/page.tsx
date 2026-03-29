@@ -30,6 +30,7 @@ interface ComputerStep {
   timestamp: string;
   level: 'info' | 'warn' | 'error';
   urls: string[];
+  ingestedAt?: boolean;
 }
 
 const LANES: { id: ComputerLane | 'all'; label: string }[] = [
@@ -296,10 +297,20 @@ export default function ComputerPage() {
                 Loading…
               </li>
             ) : filtered.length === 0 ? (
-              <li className="px-4 py-8 text-center text-sm text-slate-500">
-                No steps for this filter. Ensure OpenClaw logs exist under{' '}
-                <code className="text-slate-400">OPENCLAW_LOG_DIR</code> (default{' '}
-                <code className="text-slate-400">C:\tmp\openclaw</code>).
+              <li className="px-4 py-10 text-center">
+                <p className="text-sm text-slate-400 font-medium">No steps for this filter</p>
+                <p className="mt-2 text-xs text-slate-500 max-w-md mx-auto">
+                  OpenClaw logs must exist under <code className="text-slate-400">OPENCLAW_LOG_DIR</code>.
+                  The default path is <code className="text-slate-400">C:\tmp\openclaw</code>.
+                  Set <code className="text-slate-400">OPENCLAW_LOG_DIR</code> in{' '}
+                  <code className="text-slate-400">.env.local</code> if your logs are elsewhere.
+                </p>
+                <a
+                  href="/settings"
+                  className="mt-3 inline-block text-xs font-medium text-sky-400 hover:text-sky-300 underline underline-offset-2"
+                >
+                  Check log directory in Settings
+                </a>
               </li>
             ) : (
               filtered.map((s) => (
@@ -316,8 +327,8 @@ export default function ComputerPage() {
                     <span className="text-sm font-medium text-slate-100">
                       {s.title}
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      {s.timestamp || '—'}
+                    <span className="text-[11px] text-slate-500" title={s.ingestedAt ? 'Ingested at (no log timestamp available)' : 'Log time'}>
+                      {s.ingestedAt ? '~' : ''}{s.timestamp || '—'}
                     </span>
                   </div>
                   <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-slate-400">
